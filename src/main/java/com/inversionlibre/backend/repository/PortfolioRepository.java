@@ -330,12 +330,13 @@ public interface PortfolioRepository extends MongoRepository<Portfolio, String> 
 
     /**
      * Suma total de valores de portfolios por usuario
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'userId': ?0, 'isActive': true } }",
-        "{ '$group': { '_id': null, 'totalValue': { '$sum': '$totalValue' } } }"
-    })
-    Optional<BigDecimal> getTotalPortfolioValueByUser(String userId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'userId': ?0, 'isActive': true } }",
+    //     "{ '$group': { '_id': null, 'totalValue': { '$sum': '$totalValue' } } }"
+    // })
+    // Optional<BigDecimal> getTotalPortfolioValueByUser(String userId);
 
     /**
      * Obtiene estadísticas de portfolios por tipo

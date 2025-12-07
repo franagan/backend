@@ -1,0 +1,150 @@
+# ===================================================================
+# CONFIGURACIÓN DE INVERSIÓN LIBRE - BACKEND API
+# ===================================================================
+
+# Application Info
+spring:
+  application:
+    name: inversion-libre-backend
+  jvm:
+    arguments: --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+
+  # ===================================================================
+  # MONGODB CONFIGURATION
+  # ===================================================================
+  data:
+    mongodb:
+      # Opción 1: Con Docker (con autenticación) - Descomentar si usas Docker
+      uri: mongodb://admin:admin123@localhost:27018/inversion_libre_db?authSource=admin
+      # Opción 2: MongoDB local sin autenticación (MongoDB Compass local)
+      # uri: mongodb://localhost:27017/inversion_libre_db
+      auto-index-creation: true
+
+  # ===================================================================
+  # OAUTH2 CONFIGURATION (Google/Facebook)
+  # ===================================================================
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your-google-client-id
+            client-secret: your-google-client-secret
+            scope: openid,profile,email
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
+          facebook:
+            client-id: your-facebook-app-id
+            client-secret: your-facebook-app-secret
+            scope: email,public_profile
+            redirect-uri: http://localhost:8080/login/oauth2/code/facebook
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v2/userinfo
+            user-name-attribute: id
+          facebook:
+            authorization-uri: https://www.facebook.com/v18.0/dialog/oauth
+            token-uri: https://graph.facebook.com/v18.0/oauth/access_token
+            user-info-uri: https://graph.facebook.com/v18.0/me?fields=id,name,email
+            user-name-attribute: id
+
+  # ===================================================================
+  # DEVELOPMENT CONFIGURATION
+  # ===================================================================
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+  jackson:
+    default-property-inclusion: NON_NULL
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Europe/Madrid
+
+  # ===================================================================
+  # CACHE CONFIGURATION
+  # ===================================================================
+  cache:
+    cache-names: stocks,portfolios,users
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=5m
+
+server:
+  port: 8080
+
+# ===================================================================
+# SECURITY & JWT CONFIGURATION
+# ===================================================================
+jwt:
+  secret: Mi_Super_Secreto_JWT_Para_TFG_Inversion_Libre_2024_1234567890
+  expiration: 86400000 # 24 horas en millisegundos
+
+# CORS Configuration
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:5173
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: "*"
+  allow-credentials: true
+
+# ===================================================================
+# LOGGING CONFIGURATION
+# ===================================================================
+logging:
+  level:
+    com.inversionlibre: DEBUG
+    org.springframework.data.mongodb: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %level - %msg%n"
+
+# ===================================================================
+# EXTERNAL APIs CONFIGURATION
+# ===================================================================
+api:
+  financial:
+    timeout: 10000
+    retry-attempts: 3
+
+# ===================================================================
+# ACTUATOR CONFIGURATION
+# ===================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: always
+
+# ===================================================================
+# SPRINGDOC OPENAPI 3 (SWAGGER) CONFIGURATION
+# ===================================================================
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    display-request-duration: true
+    display-operation-id: true
+    config-url: /api-docs/swagger-config
+    url: /api-docs
+  packages-to-scan: com.inversionlibre.backend.controller
+  show-actuator: false
+  filter: true
+  info:
+    title: Inversión Libre API
+    description: API REST para la plataforma educativa financiera Inversión Libre - TFG
+    version: 1.0.0
+    contact:
+      name: Francisco Palero
+      email: francisco.palero@estudiante.uam.es

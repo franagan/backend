@@ -44,6 +44,11 @@ public interface InvestmentRepository extends MongoRepository<Investment, String
     List<Investment> findByPortfolioIdAndStatus(String portfolioId, Investment.InvestmentStatus status);
 
     /**
+     * Encuentra inversiones de un portfolio por estado ordenadas por ganancia/pérdida ascendente
+     */
+    List<Investment> findByPortfolioIdAndStatusOrderByGainLossPercentageAsc(String portfolioId, Investment.InvestmentStatus status);
+
+    /**
      * Cuenta inversiones en un portfolio
      */
     long countByPortfolioId(String portfolioId);
@@ -400,21 +405,23 @@ public interface InvestmentRepository extends MongoRepository<Investment, String
 
     /**
      * Obtiene valor total de inversiones en un portfolio
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'status': 'ACTIVE' } }",
-        "{ '$group': { '_id': null, 'totalValue': { '$sum': '$currentValue' } } }"
-    })
-    Optional<BigDecimal> getTotalValueByPortfolio(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'status': 'ACTIVE' } }",
+    //     "{ '$group': { '_id': null, 'totalValue': { '$sum': '$currentValue' } } }"
+    // })
+    // Optional<BigDecimal> getTotalValueByPortfolio(String portfolioId);
 
     /**
      * Obtiene ganancia/pérdida total de inversiones en un portfolio
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'status': 'ACTIVE' } }",
-        "{ '$group': { '_id': null, 'totalGainLoss': { '$sum': '$gainLoss' } } }"
-    })
-    Optional<BigDecimal> getTotalGainLossByPortfolio(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'status': 'ACTIVE' } }",
+    //     "{ '$group': { '_id': null, 'totalGainLoss': { '$sum': '$gainLoss' } } }"
+    // })
+    // Optional<BigDecimal> getTotalGainLossByPortfolio(String portfolioId);
 
     /**
      * Top inversiones por rendimiento en un portfolio

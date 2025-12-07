@@ -329,11 +329,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     List<Transaction> findTransfers();
 
     /**
-     * Encuentra ajustes manuales
-     */
-    List<Transaction> findByType(Transaction.TransactionType type);
-
-    /**
      * Encuentra transacciones de dividendos de un stock
      */
     @Query("{ 'stockId': ?0, 'type': { $in: ['DIVIDEND', 'DIVIDEND_REINVEST'] } }")
@@ -351,90 +346,97 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
     /**
      * Suma total de compras por portfolio
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'type': 'BUY', 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
-        "{ '$group': { '_id': null, 'totalPurchases': { '$sum': '$netAmount' } } }"
-    })
-    Optional<BigDecimal> getTotalPurchasesByPortfolio(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'type': 'BUY', 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
+    //     "{ '$group': { '_id': null, 'totalPurchases': { '$sum': '$netAmount' } } }"
+    // })
+    // Optional<BigDecimal> getTotalPurchasesByPortfolio(String portfolioId);
 
     /**
      * Suma total de ventas por portfolio
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'type': 'SELL', 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
-        "{ '$group': { '_id': null, 'totalSales': { '$sum': '$netAmount' } } }"
-    })
-    Optional<BigDecimal> getTotalSalesByPortfolio(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'type': 'SELL', 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
+    //     "{ '$group': { '_id': null, 'totalSales': { '$sum': '$netAmount' } } }"
+    // })
+    // Optional<BigDecimal> getTotalSalesByPortfolio(String portfolioId);
 
     /**
      * Suma total de dividendos recibidos por portfolio
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'type': { $in: ['DIVIDEND', 'DIVIDEND_REINVEST'] }, 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
-        "{ '$group': { '_id': null, 'totalDividends': { '$sum': '$netAmount' } } }"
-    })
-    Optional<BigDecimal> getTotalDividendsByPortfolio(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'type': { $in: ['DIVIDEND', 'DIVIDEND_REINVEST'] }, 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
+    //     "{ '$group': { '_id': null, 'totalDividends': { '$sum': '$netAmount' } } }"
+    // })
+    // Optional<BigDecimal> getTotalDividendsByPortfolio(String portfolioId);
 
     /**
      * Estadísticas de transacciones por tipo
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
-        "{ '$group': { " +
-            "'_id': '$type', " +
-            "'count': { '$sum': 1 }, " +
-            "'totalAmount': { '$sum': '$netAmount' }, " +
-            "'avgAmount': { '$avg': '$netAmount' } " +
-        "} }"
-    })
-    List<Object> getTransactionStatsByType();
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
+    //     "{ '$group': { " +
+    //         "'_id': '$type', " +
+    //         "'count': { '$sum': 1 }, " +
+    //         "'totalAmount': { '$sum': '$netAmount' }, " +
+    //         "'avgAmount': { '$avg': '$netAmount' } " +
+    //     "} }"
+    // })
+    // List<Object> getTransactionStatsByType();
 
     /**
      * Volumen de trading mensual por usuario
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'userId': ?0, 'type': { $in: ['BUY', 'SELL'] }, 'executedAt': { $gte: ?1, $lt: ?2 } } }",
-        "{ '$group': { " +
-            "'_id': { " +
-                "'year': { '$year': '$executedAt' }, " +
-                "'month': { '$month': '$executedAt' } " +
-            "}, " +
-            "'totalVolume': { '$sum': '$grossAmount' }, " +
-            "'transactionCount': { '$sum': 1 } " +
-        "} }",
-        "{ '$sort': { '_id.year': 1, '_id.month': 1 } }"
-    })
-    List<Object> getMonthlyTradingVolume(String userId, LocalDateTime startDate, LocalDateTime endDate);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'userId': ?0, 'type': { $in: ['BUY', 'SELL'] }, 'executedAt': { $gte: ?1, $lt: ?2 } } }",
+    //     "{ '$group': { " +
+    //         "'_id': { " +
+    //             "'year': { '$year': '$executedAt' }, " +
+    //             "'month': { '$month': '$executedAt' } " +
+    //         "}, " +
+    //         "'totalVolume': { '$sum': '$grossAmount' }, " +
+    //         "'transactionCount': { '$sum': 1 } " +
+    //     "} }",
+    //     "{ '$sort': { '_id.year': 1, '_id.month': 1 } }"
+    // })
+    // List<Object> getMonthlyTradingVolume(String userId, LocalDateTime startDate, LocalDateTime endDate);
 
     /**
      * Actividad de trading por stock
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'type': { $in: ['BUY', 'SELL'] } } }",
-        "{ '$group': { " +
-            "'_id': '$stockSymbol', " +
-            "'buyCount': { '$sum': { '$cond': [{ '$eq': ['$type', 'BUY'] }, 1, 0] } }, " +
-            "'sellCount': { '$sum': { '$cond': [{ '$eq': ['$type', 'SELL'] }, 1, 0] } }, " +
-            "'totalVolume': { '$sum': '$grossAmount' } " +
-        "} }",
-        "{ '$sort': { 'totalVolume': -1 } }"
-    })
-    List<Object> getTradingActivityByStock(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'type': { $in: ['BUY', 'SELL'] } } }",
+    //     "{ '$group': { " +
+    //         "'_id': '$stockSymbol', " +
+    //         "'buyCount': { '$sum': { '$cond': [{ '$eq': ['$type', 'BUY'] }, 1, 0] } }, " +
+    //         "'sellCount': { '$sum': { '$cond': [{ '$eq': ['$type', 'SELL'] }, 1, 0] } }, " +
+    //         "'totalVolume': { '$sum': '$grossAmount' } " +
+    //     "} }",
+    //     "{ '$sort': { 'totalVolume': -1 } }"
+    // })
+    // List<Object> getTradingActivityByStock(String portfolioId);
 
     /**
      * Comisiones totales pagadas por portfolio
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'portfolioId': ?0, 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
-        "{ '$group': { " +
-            "'_id': null, " +
-            "'totalCommissions': { '$sum': '$commission' }, " +
-            "'totalFees': { '$sum': '$fees' }, " +
-            "'totalTaxes': { '$sum': '$taxes' } " +
-        "} }"
-    })
-    Optional<Object> getTotalCostsByPortfolio(String portfolioId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'portfolioId': ?0, 'status': { $in: ['EXECUTED', 'SETTLED'] } } }",
+    //     "{ '$group': { " +
+    //         "'_id': null, " +
+    //         "'totalCommissions': { '$sum': '$commission' }, " +
+    //         "'totalFees': { '$sum': '$fees' }, " +
+    //         "'totalTaxes': { '$sum': '$taxes' } " +
+    //     "} }"
+    // })
+    // Optional<Object> getTotalCostsByPortfolio(String portfolioId);
 
     // ===================================================================
     // CONSULTAS DE REPORTING Y ANÁLISIS
@@ -492,17 +494,18 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
     /**
      * Estadísticas generales de un usuario
+     * TEMPORALMENTE COMENTADO - Problema con Java 17+ y BigDecimal
      */
-    @Aggregation(pipeline = {
-        "{ '$match': { 'userId': ?0 } }",
-        "{ '$group': { " +
-            "'_id': null, " +
-            "'totalTransactions': { '$sum': 1 }, " +
-            "'totalVolume': { '$sum': '$grossAmount' }, " +
-            "'totalCommissions': { '$sum': '$commission' }, " +
-            "'firstTransaction': { '$min': '$executedAt' }, " +
-            "'lastTransaction': { '$max': '$executedAt' } " +
-        "} }"
-    })
-    Optional<Object> getUserTransactionStats(String userId);
+    // @Aggregation(pipeline = {
+    //     "{ '$match': { 'userId': ?0 } }",
+    //     "{ '$group': { " +
+    //         "'_id': null, " +
+    //         "'totalTransactions': { '$sum': 1 }, " +
+    //         "'totalVolume': { '$sum': '$grossAmount' }, " +
+    //         "'totalCommissions': { '$sum': '$commission' }, " +
+    //         "'firstTransaction': { '$min': '$executedAt' }, " +
+    //         "'lastTransaction': { '$max': '$executedAt' } " +
+    //     "} }"
+    // })
+    // Optional<Object> getUserTransactionStats(String userId);
 }
