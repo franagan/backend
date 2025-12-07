@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
@@ -237,7 +238,7 @@ public class Investment {
             
             if (totalInvested.compareTo(BigDecimal.ZERO) > 0) {
                 this.gainLossPercentage = gainLoss
-                    .divide(totalInvested, 4, BigDecimal.ROUND_HALF_UP)
+                    .divide(totalInvested, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
             }
         }
@@ -291,7 +292,7 @@ public class Investment {
         }
         
         return currentValue
-            .divide(totalPortfolioValue, 4, BigDecimal.ROUND_HALF_UP)
+            .divide(totalPortfolioValue, 4, RoundingMode.HALF_UP)
             .multiply(BigDecimal.valueOf(100));
     }
 

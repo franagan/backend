@@ -68,9 +68,15 @@ spring:
   # CACHE CONFIGURATION
   # ===================================================================
   cache:
-    cache-names: stocks,portfolios,users
+    cache-names:
+      - stockSearch
+      - stockQuote
+      - companyOverview
+      - finnhubSearch
+      - finnhubQuote
+      - finnhubProfile
     caffeine:
-      spec: maximumSize=1000,expireAfterWrite=5m
+      spec: maximumSize=500,expireAfterWrite=300s
 
 server:
   port: 8080
@@ -101,12 +107,19 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %level - %msg%n"
 
 # ===================================================================
-# EXTERNAL APIs CONFIGURATION
+# STOCK DATA APIs CONFIGURATION
 # ===================================================================
-api:
-  financial:
-    timeout: 10000
-    retry-attempts: 3
+# Alpha Vantage API Configuration
+alphavantage:
+  api:
+    key: ${ALPHAVANTAGE_API_KEY:V1GCDYDV1G3B80EI}
+    base-url: https://www.alphavantage.co
+
+# Finnhub API Configuration
+finnhub:
+  api:
+    key: ${FINNHUB_API_KEY:d4qtelhr01qrphac08ugd4qtelhr01qrphac08v0}
+    base-url: https://finnhub.io/api/v1
 
 # ===================================================================
 # ACTUATOR CONFIGURATION

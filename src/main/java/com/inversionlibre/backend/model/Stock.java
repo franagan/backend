@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
@@ -260,7 +261,7 @@ public class Stock {
             this.change = newPrice.subtract(this.currentPrice);
             if (this.currentPrice.compareTo(BigDecimal.ZERO) > 0) {
                 this.changePercent = this.change
-                    .divide(this.currentPrice, 4, BigDecimal.ROUND_HALF_UP)
+                    .divide(this.currentPrice, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
             }
         }

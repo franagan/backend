@@ -17,6 +17,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
@@ -193,7 +194,7 @@ public class Portfolio {
     public void calculateGainLossPercentage() {
         if (totalInvested != null && totalInvested.compareTo(BigDecimal.ZERO) > 0) {
             this.totalGainLossPercentage = totalGainLoss
-                .divide(totalInvested, 4, BigDecimal.ROUND_HALF_UP)
+                .divide(totalInvested, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
         } else {
             this.totalGainLossPercentage = BigDecimal.ZERO;

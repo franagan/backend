@@ -97,9 +97,26 @@ public class InvestmentService {
             throw new IllegalArgumentException("Portfolio no encontrado o inactivo: " + investment.getPortfolioId());
         }
 
-        // Verificar que el stock existe y está activo
-        if (!stockService.existsAndIsActive(investment.getStockSymbol())) {
-            throw new IllegalArgumentException("Stock no encontrado o inactivo: " + investment.getStockSymbol());
+        // Verificar si el stock existe, si no, crearlo
+        Stock stock;
+        Optional<Stock> stockOpt = stockService.findBySymbol(investment.getStockSymbol());
+        if (stockOpt.isEmpty()) {
+            log.info("Stock {} no existe, creándolo automáticamente", investment.getStockSymbol());
+            // Crear el stock con la información básica proporcionada
+            stock = Stock.builder()
+                    .symbol(investment.getStockSymbol())
+                    .companyName(investment.getStockName())
+                    .currentPrice(investment.getCurrentPrice() != null ? investment.getCurrentPrice() : investment.getAveragePrice())
+                    .currency("USD") // Default currency
+                    .exchange("UNKNOWN") // Will be updated later
+                    .isActive(true)
+                    .build();
+            stock = stockService.createStock(stock);
+        } else {
+            stock = stockOpt.get();
+            if (!stock.getIsActive()) {
+                throw new IllegalArgumentException("Stock no está activo: " + investment.getStockSymbol());
+            }
         }
 
         // Verificar que no existe ya una inversión para este stock en el portfolio
@@ -107,11 +124,9 @@ public class InvestmentService {
             throw new IllegalArgumentException("Ya existe una inversión para este stock en el portfolio");
         }
 
-        // Obtener datos actuales del stock para desnormalización
-        Optional<Stock> stockOpt = stockService.findBySymbol(investment.getStockSymbol());
-        if (stockOpt.isPresent()) {
-            Stock stock = stockOpt.get();
-            investment.setStockName(stock.getCompanyName());
+        // Actualizar datos de la inversión con información del stock
+        investment.setStockName(stock.getCompanyName());
+        if (investment.getCurrentPrice() == null) {
             investment.setCurrentPrice(stock.getCurrentPrice());
         }
 
@@ -195,6 +210,36 @@ public class InvestmentService {
         
         log.info("Inversión cerrada exitosamente: {}", id);
         return closedInvestment;
+    }
+
+    /**
+     * Elimina una inversión (hard delete)
+     * Solo se permite si no tiene transacciones asociadas
+     */
+    @Transactional
+    @CacheEvict(value = "investments", key = "#id")
+    public void deleteInvestment(String id) {
+        log.info("Eliminando inversión: {}", id);
+        
+        Optional<Investment> investmentOpt = investmentRepository.findById(id);
+        if (investmentOpt.isEmpty()) {
+            throw new IllegalArgumentException("Inversión no encontrada: " + id);
+        }
+
+        Investment investment = investmentOpt.get();
+        
+        // Verificar que no tiene transacciones asociadas
+        if (investment.getTotalTransactions() != null && investment.getTotalTransactions() > 0) {
+            throw new IllegalStateException("No se puede eliminar una inversión con transacciones asociadas. Use closeInvestment en su lugar.");
+        }
+
+        // Remover del portfolio
+        removeInvestmentFromPortfolio(investment.getPortfolioId(), id);
+        
+        // Eliminar la inversión
+        investmentRepository.deleteById(id);
+        
+        log.info("Inversión eliminada exitosamente: {}", id);
     }
 
     // ===================================================================
