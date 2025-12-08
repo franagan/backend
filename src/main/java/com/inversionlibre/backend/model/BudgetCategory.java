@@ -38,6 +38,10 @@ public class BudgetCategory {
     @Builder.Default
     private String color = "bg-blue-500"; // Default Tailwind color class
 
+    private String description;
+
+    private String subcategory;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -19,6 +19,8 @@ public class BudgetService {
     }
 
     public BudgetCategory createBudget(BudgetCategory budget, String userId) {
+        // Validation removed to allow multiple expenses with the same category name
+        
         budget.setUserId(userId);
         budget.setCreatedAt(LocalDateTime.now());
         budget.setUpdatedAt(LocalDateTime.now());
@@ -33,7 +35,10 @@ public class BudgetService {
             throw new RuntimeException("Unauthorized");
         }
 
-        budget.setName(budgetDetails.getName());
+        String newName = budgetDetails.getName().trim();
+        // Validation removed to allow renaming to an existing category name
+
+        budget.setName(newName);
         budget.setSpent(budgetDetails.getSpent());
         budget.setLimit(budgetDetails.getLimit());
         budget.setColor(budgetDetails.getColor());

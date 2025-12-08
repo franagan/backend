@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface BudgetCategoryRepository extends MongoRepository<BudgetCategory, String> {
     List<BudgetCategory> findByUserId(String userId);
+    boolean existsByUserIdAndNameIgnoreCase(String userId, String name);
 }
