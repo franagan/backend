@@ -40,14 +40,7 @@ public class StockDataService {
             List<FinnhubSearchResult> finnhubResults = finnhubService.searchSymbols(keywords);
             if (finnhubResults != null && !finnhubResults.isEmpty()) {
                 log.info("Usando resultados de Finnhub: {} resultados", finnhubResults.size());
-                List<StockSearchResult> results = convertFinnhubSearchResults(finnhubResults);
-                
-                // Check price availability for each result
-                for (StockSearchResult result : results) {
-                    result.setHasLiveData(checkPriceAvailability(result.getSymbol()));
-                }
-                
-                return results;
+                return convertFinnhubSearchResults(finnhubResults);
             }
         } catch (Exception e) {
             log.warn("Finnhub search failed, trying Alpha Vantage: {}", e.getMessage());
@@ -58,12 +51,6 @@ public class StockDataService {
             List<StockSearchResult> alphaResults = alphaVantageService.searchSymbols(keywords);
             if (alphaResults != null && !alphaResults.isEmpty()) {
                 log.info("Usando resultados de Alpha Vantage: {} resultados", alphaResults.size());
-                
-                // Check price availability for each result
-                for (StockSearchResult result : alphaResults) {
-                    result.setHasLiveData(checkPriceAvailability(result.getSymbol()));
-                }
-                
                 return alphaResults;
             }
         } catch (Exception e) {

@@ -68,6 +68,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/refresh").permitAll()
                 .requestMatchers("/api/auth/validate").permitAll()
+                .requestMatchers("/api/auth/google").permitAll()
                 // Endpoint /api/auth/me requiere autenticación
                 .requestMatchers("/api/auth/me").authenticated()
                 .requestMatchers("/api/oauth2/**").permitAll()

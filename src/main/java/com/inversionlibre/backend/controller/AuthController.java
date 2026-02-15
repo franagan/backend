@@ -40,6 +40,63 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserService userService;
+    private final com.inversionlibre.backend.util.JwtUtil jwtUtil;
+
+    @PostMapping("/google")
+    @Operation(summary = "Login con Google", description = "Autentica con token de Google")
+    public ResponseEntity<ApiResponse<JwtResponse>> googleLogin(@RequestBody com.inversionlibre.backend.dto.TokenRequest request) {
+        try {
+            // Verify token with Google
+            String googleUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + request.getToken();
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            java.util.Map<String, Object> googleClaims = restTemplate.getForObject(googleUrl, java.util.Map.class);
+
+            if (googleClaims == null || googleClaims.get("email") == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("Token de Google inválido"));
+            }
+
+            String email = (String) googleClaims.get("email");
+            String name = (String) googleClaims.get("name");
+            String firstName = (String) googleClaims.get("given_name");
+            String lastName = (String) googleClaims.get("family_name");
+
+            // Find or create user
+            User user = userService.findByEmail(email).orElseGet(() -> {
+                User newUser = User.builder()
+                        .email(email)
+                        .firstName(firstName != null ? firstName : name)
+                        .lastName(lastName != null ? lastName : "")
+                        .password(java.util.UUID.randomUUID().toString()) // Random password for Google users
+                        .role(User.Role.USER)
+                        .enabled(true)
+                        .accountNonExpired(true)
+                        .accountNonLocked(true)
+                        .credentialsNonExpired(true)
+                        .build();
+                return userService.save(newUser);
+            });
+
+            // Generate JWT
+            String token = jwtUtil.generateToken(user);
+            
+            JwtResponse response = JwtResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole().name())
+                .issuedAt(java.time.LocalDateTime.now())
+                .expiresAt(java.time.LocalDateTime.now().plusHours(24))
+                .build();
+
+            return ResponseEntity.ok(ApiResponse.success("Login con Google exitoso", response));
+
+        } catch (Exception e) {
+            log.error("Error en Google login", e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Error validando token de Google"));
+        }
+    }
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", description = "Autentica un usuario y devuelve un JWT token")
