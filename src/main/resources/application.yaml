@@ -21,7 +21,7 @@ spring:
       auto-index-creation: true
 
   # ===================================================================
-  # OAUTH2 CONFIGURATION (Google/Facebook)
+  # OAUTH2 CONFIGURATION (Google/Facebook) login
   # ===================================================================
   security:
     oauth2:
