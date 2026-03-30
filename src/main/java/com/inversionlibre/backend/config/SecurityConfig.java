@@ -75,6 +75,7 @@ public class SecurityConfig {
                 .requestMatchers("/login/oauth2/**").permitAll()
                 .requestMatchers("/login").permitAll()
                 .requestMatchers("/api/test/swagger-test").permitAll()
+                .requestMatchers("/api/chat/**").permitAll()
                 
                 // Swagger UI y documentación
                 .requestMatchers("/swagger-ui/**").permitAll()

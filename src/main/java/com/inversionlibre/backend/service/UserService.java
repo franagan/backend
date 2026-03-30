@@ -131,4 +131,30 @@ public class UserService implements UserDetailsService {
         return updatedUser;
     }
 
+    // --- ADMIN METHODS --- //
+
+    public java.util.List<User> findAllUsers() {
+        log.debug("Listando todos los usuarios");
+        return userRepository.findAll();
+    }
+
+    @Transactional
+    public User updateUserRole(String userId, User.Role newRole) {
+        log.info("Actualizando rol del usuario {} a {}", userId, newRole);
+        User user = findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + userId));
+        
+        user.setRole(newRole);
+        return save(user);
+    }
+
+    @Transactional
+    public User toggleUserStatus(String userId, boolean enabled) {
+        log.info("Cambiando status del usuario {} a enabled={}", userId, enabled);
+        User user = findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + userId));
+        
+        user.setEnabled(enabled);
+        return save(user);
+    }
 }

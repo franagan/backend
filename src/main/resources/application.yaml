@@ -78,6 +78,8 @@ spring:
     caffeine:
       spec: maximumSize=500,expireAfterWrite=300s
 
+
+
 server:
   port: 8080
 
@@ -160,4 +162,5 @@ springdoc:
     version: 1.0.0
     contact:
       name: Francisco Palero
-      email: francisco.palero@estudiante.uam.es
+      email: 
+
