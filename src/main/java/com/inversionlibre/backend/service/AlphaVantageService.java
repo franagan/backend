@@ -56,6 +56,13 @@ public class AlphaVantageService {
                     .toUriString();
 
             String response = restTemplate.getForObject(url, String.class);
+            
+            // Verificación de seguridad: ¿Es HTML en lugar de JSON?
+            if (response != null && (response.trim().startsWith("<") || response.trim().toLowerCase().startsWith("<!doctype"))) {
+                log.warn("Alpha Vantage devolvió HTML en lugar de JSON en searchSymbols (posible límite de API alcanzado)");
+                return new ArrayList<>();
+            }
+            
             JsonNode root = objectMapper.readTree(response);
             
             // Verificar si hay error
@@ -111,6 +118,13 @@ public class AlphaVantageService {
                     .toUriString();
 
             String response = restTemplate.getForObject(url, String.class);
+            
+            // Verificación de seguridad: ¿Es HTML en lugar de JSON?
+            if (response != null && (response.trim().startsWith("<") || response.trim().toLowerCase().startsWith("<!doctype"))) {
+                log.warn("Alpha Vantage devolvió HTML en lugar de JSON en getQuote (posible límite de API alcanzado)");
+                return null;
+            }
+            
             JsonNode root = objectMapper.readTree(response);
             
             // Verificar si hay error
@@ -168,6 +182,13 @@ public class AlphaVantageService {
                     .toUriString();
 
             String response = restTemplate.getForObject(url, String.class);
+            
+            // Verificación de seguridad: ¿Es HTML en lugar de JSON?
+            if (response != null && (response.trim().startsWith("<") || response.trim().toLowerCase().startsWith("<!doctype"))) {
+                log.warn("Alpha Vantage devolvió HTML en lugar de JSON en getCompanyOverview (posible límite de API alcanzado)");
+                return null;
+            }
+            
             JsonNode root = objectMapper.readTree(response);
             
             // Verificar si hay error

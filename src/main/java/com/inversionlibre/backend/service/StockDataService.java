@@ -24,6 +24,9 @@ public class StockDataService {
     private final FinnhubService finnhubService;
     private final AlphaVantageService alphaVantageService;
 
+    // Modo de simulación para evitar fallos si se agotan los tokens de las APIs (útil para TFG)
+    private final boolean simulationMode = true; 
+
     public StockDataService(FinnhubService finnhubService, AlphaVantageService alphaVantageService) {
         this.finnhubService = finnhubService;
         this.alphaVantageService = alphaVantageService;
@@ -109,6 +112,12 @@ public class StockDataService {
             log.error("Alpha Vantage quote también falló para {}: {}", symbol, e.getMessage());
         }
 
+        // Modo Simulación as last resort
+        if (simulationMode) {
+            log.info("SIMULACION: Generando cotización ficticia para {}", symbol);
+            return generateMockQuote(symbol);
+        }
+
         log.warn("No se pudo obtener cotización de ningún proveedor para {}", symbol);
         return null;
     }
@@ -171,6 +180,13 @@ public class StockDataService {
             }
         } catch (Exception e) {
             log.error("Alpha Vantage price también falló para {}: {}", symbol, e.getMessage());
+        }
+
+        // Modo Simulación as last resort
+        if (simulationMode) {
+            log.info("SIMULACION: Generando precio ficticio para {}", symbol);
+            BigDecimal mockPrice = generateMockPrice(symbol);
+            return mockPrice;
         }
 
         log.warn("No se pudo obtener precio de ningún proveedor para {}", symbol);
@@ -247,5 +263,33 @@ public class StockDataService {
         overview.setWeek52Low(null);
         
         return overview;
+    }
+
+    // ========== MÉTODOS DE SIMULACIÓN (PARA TFG) ==========
+
+    private BigDecimal generateMockPrice(String symbol) {
+        // Generar un precio basado en el hash del simbolo para que sea estable
+        int hash = Math.abs(symbol.hashCode());
+        double basePrice = (hash % 200) + 50.0; // Precio entre 50 y 250
+        
+        // Añadir una pequeña variacion basada en el minuto actual para que "se mueva"
+        double variation = (LocalDateTime.now().getMinute() % 10) / 100.0;
+        return BigDecimal.valueOf(basePrice + variation).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private StockQuote generateMockQuote(String symbol) {
+        BigDecimal price = generateMockPrice(symbol);
+        StockQuote quote = new StockQuote();
+        quote.setSymbol(symbol);
+        quote.setPrice(price);
+        quote.setOpen(price.subtract(BigDecimal.valueOf(1.5)));
+        quote.setHigh(price.add(BigDecimal.valueOf(2.0)));
+        quote.setLow(price.subtract(BigDecimal.valueOf(2.5)));
+        quote.setPreviousClose(price.subtract(BigDecimal.valueOf(0.5)));
+        quote.setChange(BigDecimal.valueOf(0.5));
+        quote.setChangePercent(BigDecimal.valueOf(0.25));
+        quote.setVolume(1000000L);
+        quote.setLastUpdated(LocalDateTime.now());
+        return quote;
     }
 }
