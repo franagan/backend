@@ -83,9 +83,14 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     List<Transaction> findByStockSymbol(String stockSymbol);
 
     /**
-     * Encuentra transacciones de un stock en un portfolio
+     * Encuentra transacciones de un stock en un portfolio (por ID)
      */
     List<Transaction> findByPortfolioIdAndStockId(String portfolioId, String stockId);
+
+    /**
+     * Encuentra transacciones de un stock en un portfolio (por símbolo)
+     */
+    List<Transaction> findByPortfolioIdAndStockSymbol(String portfolioId, String stockSymbol);
 
     /**
      * Encuentra transacciones de un stock por usuario

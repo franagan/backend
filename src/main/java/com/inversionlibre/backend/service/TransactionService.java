@@ -102,7 +102,9 @@ public class TransactionService {
         // Establecer tipo y estado
         transaction.setType(Transaction.TransactionType.BUY);
         transaction.setStatus(Transaction.TransactionStatus.PENDING);
-        transaction.setExecutedAt(LocalDateTime.now());
+        if (transaction.getExecutedAt() == null) {
+            transaction.setExecutedAt(LocalDateTime.now());
+        }
 
         // Calcular montos
         transaction.calculateAmounts();
@@ -129,7 +131,8 @@ public class TransactionService {
                 investment = createNewInvestmentFromTransaction(savedTransaction);
             }
 
-            // Marcar transacción como ejecutada
+            // Marcar transacción como ejecutada y vincular inversión
+            savedTransaction.setInvestmentId(investment.getId());
             savedTransaction.setStatus(Transaction.TransactionStatus.EXECUTED);
             savedTransaction = transactionRepository.save(savedTransaction);
 
@@ -165,7 +168,9 @@ public class TransactionService {
         // Establecer tipo y estado
         transaction.setType(Transaction.TransactionType.SELL);
         transaction.setStatus(Transaction.TransactionStatus.PENDING);
-        transaction.setExecutedAt(LocalDateTime.now());
+        if (transaction.getExecutedAt() == null) {
+            transaction.setExecutedAt(LocalDateTime.now());
+        }
 
         // Calcular montos
         transaction.calculateAmounts();
@@ -190,7 +195,8 @@ public class TransactionService {
                 savedTransaction.getId()
             );
 
-            // Marcar transacción como ejecutada
+            // Marcar transacción como ejecutada y vincular inversión
+            savedTransaction.setInvestmentId(investment.getId());
             savedTransaction.setStatus(Transaction.TransactionStatus.EXECUTED);
             savedTransaction = transactionRepository.save(savedTransaction);
 
@@ -231,7 +237,9 @@ public class TransactionService {
         }
         
         transaction.setStatus(Transaction.TransactionStatus.PENDING);
-        transaction.setExecutedAt(LocalDateTime.now());
+        if (transaction.getExecutedAt() == null) {
+            transaction.setExecutedAt(LocalDateTime.now());
+        }
 
         // Para dividendos, el gross amount es igual al net amount inicialmente
         if (transaction.getGrossAmount() == null) {
@@ -254,6 +262,8 @@ public class TransactionService {
                     transaction.getNetAmount(),
                     savedTransaction.getId()
                 );
+                // Vincular inversión
+                savedTransaction.setInvestmentId(investmentOpt.get().getId());
             }
 
             // Marcar como ejecutada
@@ -617,5 +627,13 @@ public class TransactionService {
      */
     public long countByPortfolioId(String portfolioId) {
         return transactionRepository.countByPortfolioId(portfolioId);
+    }
+
+    /**
+     * Obtiene todas las transacciones de un stock en un portfolio
+     */
+    public List<Transaction> findByPortfolioAndSymbol(String portfolioId, String symbol) {
+        log.debug("Obteniendo transacciones de {} en portfolio {}", symbol, portfolioId);
+        return transactionRepository.findByPortfolioIdAndStockSymbol(portfolioId, symbol);
     }
 }

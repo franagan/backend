@@ -19,8 +19,12 @@ public class BudgetController {
     private final BudgetService budgetService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BudgetCategory>>> getUserBudgets(@AuthenticationPrincipal User user) {
-        List<BudgetCategory> budgets = budgetService.getUserBudgets(user.getId());
+    public ResponseEntity<ApiResponse<List<BudgetCategory>>> getUserBudgets(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) BudgetCategory.BudgetPeriod period,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+        List<BudgetCategory> budgets = budgetService.getUserBudgets(user.getId(), period, year, month);
         return ResponseEntity.ok(ApiResponse.success("Presupuestos cargados correctamente", budgets));
     }
 

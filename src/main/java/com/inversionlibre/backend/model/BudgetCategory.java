@@ -42,6 +42,14 @@ public class BudgetCategory {
 
     private String subcategory;
 
+    public enum BudgetPeriod {
+        MONTHLY,
+        ANNUAL
+    }
+
+    @Builder.Default
+    private BudgetPeriod period = BudgetPeriod.MONTHLY;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

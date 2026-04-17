@@ -80,7 +80,17 @@ public class InvestmentService {
      */
     public Optional<Investment> findByPortfolioAndStock(String portfolioId, String stockId) {
         log.debug("Buscando inversión en portfolio {} para stock {}", portfolioId, stockId);
-        return investmentRepository.findByPortfolioIdAndStockId(portfolioId, stockId);
+        
+        // 1. Intentar por stockId directo
+        Optional<Investment> invOpt = investmentRepository.findByPortfolioIdAndStockId(portfolioId, stockId);
+        
+        // 2. Si no se encuentra y stockId parece un símbolo (corto), intentar por símbolo
+        if (invOpt.isEmpty() && stockId != null && stockId.length() <= 10) {
+            log.debug("No encontrado por ID, intentando por símbolo: {}", stockId);
+            invOpt = investmentRepository.findByPortfolioIdAndStockSymbol(portfolioId, stockId);
+        }
+        
+        return invOpt;
     }
 
     /**

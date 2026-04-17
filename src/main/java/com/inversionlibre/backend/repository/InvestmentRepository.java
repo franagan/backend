@@ -73,14 +73,24 @@ public interface InvestmentRepository extends MongoRepository<Investment, String
     List<Investment> findByStockSymbol(String stockSymbol);
 
     /**
-     * Encuentra una inversión específica por portfolio y stock
+     * Encuentra una inversión específica por portfolio y stock ID
      */
     Optional<Investment> findByPortfolioIdAndStockId(String portfolioId, String stockId);
 
     /**
-     * Verifica si existe una inversión para un portfolio y stock
+     * Encuentra una inversión específica por portfolio y símbolo de stock
+     */
+    Optional<Investment> findByPortfolioIdAndStockSymbol(String portfolioId, String stockSymbol);
+
+    /**
+     * Verifica si existe una inversión para un portfolio y stock ID
      */
     boolean existsByPortfolioIdAndStockId(String portfolioId, String stockId);
+
+    /**
+     * Verifica si existe una inversión para un portfolio y símbolo de stock
+     */
+    boolean existsByPortfolioIdAndStockSymbol(String portfolioId, String stockSymbol);
 
     // ===================================================================
     // CONSULTAS POR ESTRATEGIA Y ESTADO

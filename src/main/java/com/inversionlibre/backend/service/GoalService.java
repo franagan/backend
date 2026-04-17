@@ -37,6 +37,7 @@ public class GoalService {
         goal.setCurrentAmount(goalDetails.getCurrentAmount());
         goal.setTargetAmount(goalDetails.getTargetAmount());
         goal.setIcon(goalDetails.getIcon());
+        goal.setStartDate(goalDetails.getStartDate());
         goal.setDeadline(goalDetails.getDeadline());
         goal.setUpdatedAt(LocalDateTime.now());
 

@@ -19,6 +19,7 @@ import java.util.List;
 public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
+    private final com.inversionlibre.backend.repository.SavingsGoalRepository savingsGoalRepository;
 
     public List<Expense> getUserExpenses(String userId) {
         return expenseRepository.findByUserId(userId);
@@ -26,7 +27,27 @@ public class ExpenseService {
 
     public Expense saveExpense(Expense expense, String userId) {
         expense.setUserId(userId);
-        return expenseRepository.save(expense);
+        Expense saved = expenseRepository.save(expense);
+        
+        // Handle Goal Integration
+        if (expense.getLinkedGoalId() != null) {
+            recordGoalContribution(expense.getLinkedGoalId(), expense.getAmount(), userId);
+        }
+        
+        return saved;
+    }
+
+    private void recordGoalContribution(String goalId, Double amount, String userId) {
+        try {
+            com.inversionlibre.backend.model.SavingsGoal goal = savingsGoalRepository.findById(goalId).orElse(null);
+            if (goal != null && goal.getUserId().equals(userId)) {
+                goal.setCurrentAmount(goal.getCurrentAmount() + Math.abs(amount));
+                goal.setUpdatedAt(java.time.LocalDateTime.now());
+                savingsGoalRepository.save(goal);
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating goal amount: " + e.getMessage());
+        }
     }
 
     public List<Expense> importExpenses(MultipartFile file, String userId) throws IOException {
@@ -98,10 +119,20 @@ public class ExpenseService {
         }
 
         expense.setConcept(expenseDetails.getConcept());
+        
+        // Handle Goal Integration if amount changed
+        if (expense.getLinkedGoalId() != null && !expense.getAmount().equals(expenseDetails.getAmount())) {
+            double diff = expenseDetails.getAmount() - expense.getAmount();
+            recordGoalContribution(expense.getLinkedGoalId(), diff, userId);
+        }
+
         expense.setAmount(expenseDetails.getAmount());
         expense.setDate(expenseDetails.getDate());
         expense.setCategory(expenseDetails.getCategory());
         expense.setSubcategory(expenseDetails.getSubcategory());
+        expense.setIsRecurring(expenseDetails.getIsRecurring());
+        expense.setRecurringPeriod(expenseDetails.getRecurringPeriod());
+        expense.setLinkedGoalId(expenseDetails.getLinkedGoalId());
 
         return expenseRepository.save(expense);
     }
@@ -113,7 +144,22 @@ public class ExpenseService {
         if (!expense.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized");
         }
+
+        // Revert Goal Contribution if deleted
+        if (expense.getLinkedGoalId() != null) {
+            recordGoalContribution(expense.getLinkedGoalId(), -expense.getAmount(), userId);
+        }
         
         expenseRepository.delete(expense);
+    }
+    
+    public List<Expense> getRecurringTemplates(String userId) {
+        return expenseRepository.findByUserId(userId).stream()
+                .filter(e -> Boolean.TRUE.equals(e.getIsRecurring()))
+                .toList();
+    }
+
+    public List<Expense> getExpensesByGoal(String goalId) {
+        return expenseRepository.findByLinkedGoalId(goalId);
     }
 }

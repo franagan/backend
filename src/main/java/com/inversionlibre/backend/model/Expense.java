@@ -40,5 +40,12 @@ public class Expense {
     private String subcategory; // Optional: linked to BudgetCategory subcategory
 
     @Builder.Default
+    private Boolean isRecurring = false;
+
+    private String recurringPeriod; // "MONTHLY", "WEEKLY", "YEARLY"
+
+    private String linkedGoalId; // Link to SavingsGoal
+
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

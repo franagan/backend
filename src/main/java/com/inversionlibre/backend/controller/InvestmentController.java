@@ -37,6 +37,7 @@ public class InvestmentController {
 
     private final InvestmentService investmentService;
     private final PortfolioService portfolioService;
+    private final com.inversionlibre.backend.service.TransactionService transactionService;
 
     /**
      * Obtiene todas las inversiones de un portfolio
@@ -89,15 +90,15 @@ public class InvestmentController {
     }
 
     /**
-     * Crea una nueva inversión
+     * Crea una nueva inversión (o añade a una existente vía transacción)
      */
     @PostMapping
-    @Operation(summary = "Crear inversión", description = "Crea una nueva inversión en un portfolio")
+    @Operation(summary = "Crear inversión", description = "Crea una nueva inversión o añade a una existente mediante una transacción")
     public ResponseEntity<ApiResponse<InvestmentResponse>> createInvestment(
             @Valid @RequestBody CreateInvestmentRequest request,
             @AuthenticationPrincipal User user) {
         
-        log.info("Creando nueva inversión en portfolio: {}", request.getPortfolioId());
+        log.info("Procesando inversión en portfolio: {} para stock: {}", request.getPortfolioId(), request.getStockSymbol());
         
         // Verificar ownership del portfolio
         if (!portfolioService.validateOwnership(request.getPortfolioId(), user.getId())) {
@@ -105,21 +106,30 @@ public class InvestmentController {
                     .body(ApiResponse.error("No tienes permiso para modificar este portfolio"));
         }
         
-        Investment investment = Investment.builder()
+        // Convertir el request en una transacción de compra para usar la lógica unificada
+        com.inversionlibre.backend.model.Transaction transaction = com.inversionlibre.backend.model.Transaction.builder()
+                .userId(user.getId())
                 .portfolioId(request.getPortfolioId())
                 .stockId(request.getStockId())
                 .stockSymbol(request.getStockSymbol())
                 .stockName(request.getStockName())
                 .quantity(request.getQuantity())
-                .averagePrice(request.getAveragePrice())
-                .currentPrice(request.getCurrentPrice())
+                .unitPrice(request.getAveragePrice()) // El precio de compra
+                .currency("EUR")
+                .source("Manual")
                 .build();
         
-        Investment createdInvestment = investmentService.createInvestment(investment);
-        InvestmentResponse response = convertToResponse(createdInvestment);
+        // Procesar como transacción de compra (esto creará la inversión si no existe)
+        com.inversionlibre.backend.model.Transaction processedTx = transactionService.processBuyTransaction(transaction);
+        
+        // Obtener la inversión actualizada/creada para retornar
+        Investment investment = investmentService.findByPortfolioAndStock(request.getPortfolioId(), request.getStockId())
+                .orElseThrow(() -> new RuntimeException("Error al recuperar la inversión tras crear la transacción"));
+                
+        InvestmentResponse response = convertToResponse(investment);
         
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Inversión creada exitosamente", response));
+                .body(ApiResponse.success("Inversión registrada correctamente", response));
     }
 
     /**
@@ -253,6 +263,7 @@ public class InvestmentController {
                 .goals(investment.getGoals())
                 .performance(investment.getPerformance())
                 .totalTransactions(investment.getTotalTransactions())
+                .transactions(transactionService.findByPortfolioAndSymbol(investment.getPortfolioId(), investment.getStockSymbol()))
                 .firstPurchaseDate(investment.getFirstPurchaseDate())
                 .lastTransactionDate(investment.getLastTransactionDate())
                 .createdAt(investment.getCreatedAt())

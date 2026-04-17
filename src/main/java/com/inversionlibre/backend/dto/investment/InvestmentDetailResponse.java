@@ -41,6 +41,7 @@ public class InvestmentDetailResponse {
     private Investment.PerformanceMetrics performance;
     
     private Integer totalTransactions;
+    private java.util.List<com.inversionlibre.backend.model.Transaction> transactions;
     private LocalDateTime firstPurchaseDate;
     private LocalDateTime lastTransactionDate;
     

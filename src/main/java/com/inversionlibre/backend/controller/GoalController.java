@@ -17,11 +17,20 @@ import java.util.List;
 public class GoalController {
 
     private final GoalService goalService;
+    private final com.inversionlibre.backend.service.ExpenseService expenseService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<SavingsGoal>>> getUserGoals(@AuthenticationPrincipal User user) {
         List<SavingsGoal> goals = goalService.getUserGoals(user.getId());
         return ResponseEntity.ok(ApiResponse.success("Objetivos cargados correctamente", goals));
+    }
+
+    @GetMapping("/{id}/movements")
+    public ResponseEntity<ApiResponse<List<com.inversionlibre.backend.model.Expense>>> getGoalMovements(
+            @AuthenticationPrincipal User user,
+            @PathVariable String id) {
+        List<com.inversionlibre.backend.model.Expense> movements = expenseService.getExpensesByGoal(id);
+        return ResponseEntity.ok(ApiResponse.success("Movimientos cargados correctamente", movements));
     }
 
     @PostMapping

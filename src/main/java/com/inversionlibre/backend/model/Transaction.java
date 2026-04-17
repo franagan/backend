@@ -38,7 +38,7 @@ public class Transaction {
     @Id
     private String id;
 
-    @NotBlank(message = "El ID del usuario es obligatorio")
+    //@NotBlank(message = "El ID del usuario es obligatorio")
     @Indexed
     private String userId;
 
@@ -46,7 +46,7 @@ public class Transaction {
     @Indexed
     private String portfolioId;
 
-    @NotBlank(message = "El ID de la inversión es obligatorio")
+    //@NotBlank(message = "El ID de la inversión es obligatorio")
     @Indexed
     private String investmentId;
 

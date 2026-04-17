@@ -34,9 +34,10 @@ public class ChatbotService {
      * Procesa una pregunta del usuario enviándola al microservicio de Python (API Gateway pattern):
      * 
      * @param userMessage La pregunta o mensaje del usuario
+     * @param context Contexto financiero del usuario para personalización
      * @return La respuesta generada por la IA
      */
-    public String askQuestion(String userMessage) {
+    public String askQuestion(String userMessage, String context) {
         log.info("Recibida pregunta para el chatbot, redirigiendo a microservicio Python: {}", userMessage);
 
         try {
@@ -44,7 +45,10 @@ public class ChatbotService {
             Map<String, String> response = restClient.post()
                     .uri(pythonApiUrl + "/api/chat")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("message", userMessage))
+                    .body(Map.of(
+                        "message", userMessage,
+                        "user_context", context != null ? context : ""
+                    ))
                     .retrieve()
                     .body(Map.class);
 

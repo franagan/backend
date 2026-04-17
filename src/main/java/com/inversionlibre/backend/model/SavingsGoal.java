@@ -39,6 +39,7 @@ public class SavingsGoal {
     @Builder.Default
     private String icon = "💰";
 
+    private LocalDate startDate;
     private LocalDate deadline;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
