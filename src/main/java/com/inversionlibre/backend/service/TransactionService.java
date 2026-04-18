@@ -3,6 +3,7 @@ package com.inversionlibre.backend.service;
 import com.inversionlibre.backend.model.Transaction;
 import com.inversionlibre.backend.model.Investment;
 import com.inversionlibre.backend.model.Portfolio;
+import com.inversionlibre.backend.model.Stock;
 import com.inversionlibre.backend.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,29 @@ public class TransactionService {
     }
 
     /**
+     * Crea y procesa una transacción según su tipo de forma genérica
+     */
+    @Transactional
+    public Transaction createTransaction(Transaction transaction) {
+        log.info("Creando transacción tipo {} para {}", transaction.getType(), transaction.getStockSymbol());
+        
+        switch (transaction.getType()) {
+            case BUY:
+            case DIVIDEND_REINVEST:
+            case TRANSFER_IN:
+                return processBuyTransaction(transaction);
+            case SELL:
+            case TRANSFER_OUT:
+                return processSellTransaction(transaction);
+            default:
+                transaction.calculateAmounts();
+                if (transaction.getExecutedAt() == null) transaction.setExecutedAt(LocalDateTime.now());
+                if (transaction.getStatus() == null) transaction.setStatus(Transaction.TransactionStatus.EXECUTED);
+                return transactionRepository.save(transaction);
+        }
+    }
+
+    /**
      * Obtiene todas las transacciones de un usuario
      */
     public List<Transaction> findByUserId(String userId) {
@@ -95,6 +119,9 @@ public class TransactionService {
         log.info("Procesando transacción de compra: {} {} a {}", 
                 transaction.getQuantity(), transaction.getStockSymbol(), transaction.getUnitPrice());
         
+        // Asegurar que el stock exista (especialmente para activos manuales/especiales)
+        ensureStockExists(transaction);
+
         // Validaciones previas
         validateTransaction(transaction);
         validateBuyTransaction(transaction);
@@ -229,6 +256,9 @@ public class TransactionService {
         log.info("Procesando dividendo: {} para {}", 
                 transaction.getNetAmount(), transaction.getStockSymbol());
         
+        // Asegurar que el stock exista
+        ensureStockExists(transaction);
+
         // Validaciones
         validateTransaction(transaction);
         
@@ -582,6 +612,29 @@ public class TransactionService {
         }
     }
 
+    /**
+     * Asegura que el stock de la transacción exista en el sistema
+     */
+    private void ensureStockExists(Transaction transaction) {
+        if (!stockService.existsAndIsActive(transaction.getStockSymbol())) {
+            log.info("Stock no encontrado: {}. Creándolo on-the-fly.", transaction.getStockSymbol());
+            
+            Stock newStock = Stock.builder()
+                .symbol(transaction.getStockSymbol().toUpperCase())
+                .companyName(transaction.getStockName())
+                .assetType(transaction.getAssetType() != null ? transaction.getAssetType() : Stock.AssetType.STOCK)
+                .currentPrice(transaction.getUnitPrice())
+                .currency(transaction.getCurrency() != null ? transaction.getCurrency() : "EUR")
+                .sector("Personal")
+                .industry("Diversified")
+                .country("ES")
+                .exchange("Manual")
+                .build();
+            
+            stockService.createStock(newStock);
+        }
+    }
+
     // ===================================================================
     // MÉTODOS AUXILIARES
     // ===================================================================
@@ -590,11 +643,23 @@ public class TransactionService {
      * Crea una nueva inversión a partir de una transacción de compra
      */
     private Investment createNewInvestmentFromTransaction(Transaction transaction) {
+        // Obtener el tipo de activo del stock para desnormalizarlo en la inversión
+        Stock.AssetType assetType = Stock.AssetType.STOCK;
+        try {
+            Optional<Stock> stockOpt = stockService.findBySymbol(transaction.getStockSymbol());
+            if (stockOpt.isPresent()) {
+                assetType = stockOpt.get().getAssetType();
+            }
+        } catch (Exception e) {
+            log.warn("No se pudo obtener el tipo de activo para {}, usando STOCK por defecto", transaction.getStockSymbol());
+        }
+
         Investment investment = Investment.builder()
             .portfolioId(transaction.getPortfolioId())
             .stockId(transaction.getStockId())
             .stockSymbol(transaction.getStockSymbol())
             .stockName(transaction.getStockName())
+            .assetType(assetType)
             .quantity(transaction.getQuantity())
             .averagePrice(transaction.getUnitPrice())
             .currentPrice(transaction.getUnitPrice())

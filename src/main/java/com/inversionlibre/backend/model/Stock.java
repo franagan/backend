@@ -157,6 +157,9 @@ public class Stock {
         COMMODITY,      // Materia prima
         CRYPTO,         // Criptomoneda
         REIT,           // REIT (Real Estate Investment Trust)
+        REAL_ESTATE,    // Inmueble (Directo)
+        FIXED_INCOME,   // Renta Fija / Depósitos
+        CASH,           // Efectivo / Liquidez
         INDEX           // Índice
     }
 

@@ -235,6 +235,62 @@ public class AlphaVantageService {
     }
 
     /**
+     * Obtiene serie temporal diaria de un stock
+     */
+    @Cacheable(value = "stockTimeSeries", key = "#symbol")
+    public JsonNode getTimeSeries(String symbol) {
+        log.info("Obteniendo serie temporal para: {}", symbol);
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                    .queryParam("function", "TIME_SERIES_DAILY")
+                    .queryParam("symbol", symbol)
+                    .queryParam("apikey", apiKey)
+                    .toUriString();
+
+            String response = restTemplate.getForObject(url, String.class);
+            
+            // Verificación de seguridad: ¿Es HTML en lugar de JSON?
+            if (response != null && (response.trim().startsWith("<") || response.trim().toLowerCase().startsWith("<!doctype"))) {
+                log.warn("Alpha Vantage devolvió HTML en lugar de JSON en getTimeSeries (posible límite de API alcanzado)");
+                return null;
+            }
+            
+            return objectMapper.readTree(response);
+        } catch (Exception e) {
+            log.error("Error obteniendo serie temporal: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene histórico de dividendos de un stock
+     */
+    @Cacheable(value = "stockDividends", key = "#symbol")
+    public JsonNode getDividends(String symbol) {
+        log.info("Obteniendo dividendos para: {}", symbol);
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                    .queryParam("function", "DIVIDENDS")
+                    .queryParam("symbol", symbol)
+                    .queryParam("apikey", apiKey)
+                    .toUriString();
+
+            String response = restTemplate.getForObject(url, String.class);
+            
+            // Verificación de seguridad: ¿Es HTML en lugar de JSON?
+            if (response != null && (response.trim().startsWith("<") || response.trim().toLowerCase().startsWith("<!doctype"))) {
+                log.warn("Alpha Vantage devolvió HTML en lugar de JSON en getDividends (posible límite de API alcanzado)");
+                return null;
+            }
+            
+            return objectMapper.readTree(response);
+        } catch (Exception e) {
+            log.error("Error obteniendo dividendos: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Obtiene solo el precio actual de un stock (método ligero)
      */
     @Cacheable(value = "stockPrices", key = "#symbol")

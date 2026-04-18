@@ -202,6 +202,59 @@ public class FinnhubService {
     }
 
     /**
+     * Obtener recomendaciones de analistas
+     * Endpoint: GET /stock/recommendation?symbol={symbol}
+     */
+    @Cacheable(value = "finnhubRecommendations", key = "#symbol")
+    public JsonNode getRecommendationTrends(String symbol) {
+        log.info("Obteniendo recomendaciones de Finnhub para: {}", symbol);
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/stock/recommendation")
+                    .queryParam("symbol", symbol)
+                    .queryParam("token", apiKey)
+                    .toUriString();
+
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return objectMapper.readTree(response.getBody());
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error al obtener recomendaciones de Finnhub", e);
+            return null;
+        }
+    }
+
+    /**
+     * Obtener noticias de la compañía
+     * Endpoint: GET /company-news?symbol={symbol}&from=...&to=...
+     */
+    @Cacheable(value = "finnhubNews", key = "#symbol")
+    public JsonNode getCompanyNews(String symbol) {
+        log.info("Obteniendo noticias de Finnhub para: {}", symbol);
+        try {
+            java.time.LocalDate now = java.time.LocalDate.now();
+            java.time.LocalDate monthAgo = now.minusMonths(1);
+            
+            String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/company-news")
+                    .queryParam("symbol", symbol)
+                    .queryParam("from", monthAgo.toString())
+                    .queryParam("to", now.toString())
+                    .queryParam("token", apiKey)
+                    .toUriString();
+
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return objectMapper.readTree(response.getBody());
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error al obtener noticias de Finnhub", e);
+            return null;
+        }
+    }
+
+    /**
      * Obtener solo el precio actual
      */
     public Double getStockPrice(String symbol) {

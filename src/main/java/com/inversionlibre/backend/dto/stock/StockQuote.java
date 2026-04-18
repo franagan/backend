@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 public class StockQuote {
     
     private String symbol;
+    private String currency;
     private BigDecimal price;
     private BigDecimal open;
     private BigDecimal high;

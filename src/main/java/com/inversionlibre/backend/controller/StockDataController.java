@@ -1,9 +1,7 @@
 package com.inversionlibre.backend.controller;
 
 import com.inversionlibre.backend.dto.ApiResponse;
-import com.inversionlibre.backend.dto.stock.CompanyOverview;
-import com.inversionlibre.backend.dto.stock.StockQuote;
-import com.inversionlibre.backend.dto.stock.StockSearchResult;
+import com.inversionlibre.backend.dto.stock.*;
 import com.inversionlibre.backend.service.StockDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -104,29 +102,25 @@ public class StockDataController {
     }
 
     /**
-     * Obtiene solo el precio actual de un stock (endpoint ligero)
-     * GET /api/stocks/{symbol}/price
+     * Obtiene información COMPLETA de una acción para la vista detallada
+     * GET /api/stocks/{symbol}/details
      */
-    @GetMapping("/{symbol}/price")
+    @GetMapping("/{symbol}/details")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getStockPrice(
-            @PathVariable String symbol) {
+    public ResponseEntity<ApiResponse<StockDetailsDTO>> getStockDetails(
+            @PathVariable String symbol,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.inversionlibre.backend.model.User user) {
         
-        log.info("Obteniendo precio para: {}", symbol);
+        log.info("Obteniendo detalles completos para: {} (Usuario: {})", symbol, user.getEmail());
         
-        BigDecimal price = stockDataService.getStockPrice(symbol.toUpperCase());
+        StockDetailsDTO details = stockDataService.getStockDetails(symbol.toUpperCase(), user.getId());
         
-        if (price == null) {
+        if (details == null) {
             return ResponseEntity.ok(
-                    ApiResponse.error("No se encontró precio para: " + symbol));
+                    ApiResponse.error("No se pudieron obtener los detalles para: " + symbol));
         }
         
-        Map<String, Object> response = Map.of(
-                "symbol", symbol.toUpperCase(),
-                "price", price
-        );
-        
         return ResponseEntity.ok(
-                ApiResponse.success("Precio obtenido exitosamente", response));
+                ApiResponse.success("Detalles obtenidos exitosamente", details));
     }
 }

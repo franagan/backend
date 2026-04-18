@@ -139,6 +139,23 @@ public class StockService {
     }
 
     /**
+     * Asegura que un stock exista, creándolo si es necesario
+     */
+    @Transactional
+    @CacheEvict(value = "stocks", key = "#stock.symbol")
+    public Stock getOrCreateStock(Stock stock) {
+        log.info("Asegurando existencia de stock: {}", stock.getSymbol());
+        Optional<Stock> existing = stockRepository.findBySymbol(stock.getSymbol().toUpperCase());
+        
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+        
+        // Si no existe, lo creamos
+        return createStock(stock);
+    }
+
+    /**
      * Elimina un stock (desactiva)
      */
     @Transactional

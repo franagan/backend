@@ -60,6 +60,8 @@ public class Transaction {
     @NotBlank(message = "El nombre del stock es obligatorio")
     private String stockName; // Desnormalizado para consultas rápidas
 
+    private Stock.AssetType assetType; // Para creación de activos nuevos
+
     // Tipo y estado de la transacción
     @NotNull(message = "El tipo de transacción es obligatorio")
     private TransactionType type;

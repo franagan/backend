@@ -54,6 +54,9 @@ public class Investment {
     @NotBlank(message = "El nombre del stock es obligatorio")
     private String stockName; // Desnormalizado para consultas rápidas
 
+    @Builder.Default
+    private Stock.AssetType assetType = Stock.AssetType.STOCK; // Desnormalizado para consultas y filtros
+
     // Cantidad de acciones/unidades
     @NotNull(message = "La cantidad es obligatoria")
     @DecimalMin(value = "0.0", message = "La cantidad no puede ser negativa")
