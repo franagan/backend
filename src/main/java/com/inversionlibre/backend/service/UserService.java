@@ -25,6 +25,8 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final com.inversionlibre.backend.repository.PortfolioRepository portfolioRepository;
+    private final com.inversionlibre.backend.repository.ChatMessageRepository chatMessageRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -58,9 +60,19 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void deleteById(String id) {
-        log.info("Eliminando usuario con ID: {}", id);
+        log.info("Iniciando borrado en cascada para usuario con ID: {}", id);
+        
+        // 1. Borrar portfolios asociados
+        portfolioRepository.deleteByUserId(id);
+        log.debug("Portfolios del usuario eliminados");
+        
+        // 2. Borrar historial de chat
+        chatMessageRepository.deleteByUserId(id);
+        log.debug("Historial de chat eliminado");
+        
+        // 3. Borrar el usuario
         userRepository.deleteById(id);
-        log.info("Usuario eliminado exitosamente");
+        log.info("Usuario y todos sus datos asociados eliminados exitosamente");
     }
 
     @Transactional

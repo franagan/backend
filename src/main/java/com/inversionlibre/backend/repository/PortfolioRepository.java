@@ -59,6 +59,11 @@ public interface PortfolioRepository extends MongoRepository<Portfolio, String> 
      */
     long countByUserIdAndIsActiveTrue(String userId);
 
+    /**
+     * Borra todos los portfolios de un usuario
+     */
+    void deleteByUserId(String userId);
+
     // ===================================================================
     // CONSULTAS POR TIPO Y ESTADO
     // ===================================================================

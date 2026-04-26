@@ -16,10 +16,12 @@ public class ChatbotService {
 
     private final RestClient restClient;
     private final String pythonApiUrl;
+    private final com.inversionlibre.backend.repository.ChatMessageRepository chatMessageRepository;
 
     public ChatbotService(
             RestClient.Builder restClientBuilder,
-            @Value("${ai.service.url:http://localhost:8001}") String pythonApiUrl) {
+            @Value("${ai.service.url:http://localhost:8001}") String pythonApiUrl,
+            com.inversionlibre.backend.repository.ChatMessageRepository chatMessageRepository) {
         java.net.http.HttpClient jdkHttpClient = java.net.http.HttpClient.newBuilder()
                 .version(java.net.http.HttpClient.Version.HTTP_1_1)
                 .build();
@@ -28,6 +30,7 @@ public class ChatbotService {
                 .requestFactory(new org.springframework.http.client.JdkClientHttpRequestFactory(jdkHttpClient))
                 .build();
         this.pythonApiUrl = pythonApiUrl;
+        this.chatMessageRepository = chatMessageRepository;
     }
 
     /**
@@ -37,8 +40,18 @@ public class ChatbotService {
      * @param context Contexto financiero del usuario para personalización
      * @return La respuesta generada por la IA
      */
-    public String askQuestion(String userMessage, String context) {
+    public String askQuestion(String userMessage, String context, String userId) {
         log.info("Recibida pregunta para el chatbot, redirigiendo a microservicio Python: {}", userMessage);
+        
+        // Guardar mensaje del usuario
+        if (userId != null) {
+            chatMessageRepository.save(com.inversionlibre.backend.model.ChatMessage.builder()
+                .userId(userId)
+                .text(userMessage)
+                .sender("user")
+                .timestamp(java.time.LocalDateTime.now())
+                .build());
+        }
 
         try {
             @SuppressWarnings("unchecked")
@@ -54,7 +67,19 @@ public class ChatbotService {
 
             if (response != null && response.containsKey("response")) {
                 log.info("Respuesta obtenida correctamente desde el microservicio Python.");
-                return response.get("response");
+                String botResponse = response.get("response");
+                
+                // Guardar respuesta del bot
+                if (userId != null) {
+                    chatMessageRepository.save(com.inversionlibre.backend.model.ChatMessage.builder()
+                        .userId(userId)
+                        .text(botResponse)
+                        .sender("bot")
+                        .timestamp(java.time.LocalDateTime.now())
+                        .build());
+                }
+                
+                return botResponse;
             } else {
                 log.warn("El microservicio Python devolvió una respuesta vacía o sin el formato esperado.");
                 return "Lo siento, ha habido un problema al procesar tu consulta (respuesta vacía).";
@@ -63,5 +88,13 @@ public class ChatbotService {
             log.error("Error de comunicación con el microservicio de IA Python: ", e);
             throw new RuntimeException("Error al comunicarse con el asistente de IA.", e);
         }
+    }
+    
+    public java.util.List<com.inversionlibre.backend.model.ChatMessage> getChatHistory(String userId) {
+        return chatMessageRepository.findByUserIdOrderByTimestampAsc(userId);
+    }
+
+    public void clearChatHistory(String userId) {
+        chatMessageRepository.deleteByUserId(userId);
     }
 }

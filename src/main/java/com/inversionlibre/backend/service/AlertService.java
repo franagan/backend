@@ -5,6 +5,7 @@ import com.inversionlibre.backend.dto.stock.FinnhubQuote;
 import com.inversionlibre.backend.model.Alert;
 import com.inversionlibre.backend.model.User;
 import com.inversionlibre.backend.repository.AlertRepository;
+import com.inversionlibre.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -34,12 +35,20 @@ import java.util.stream.Collectors;
  * @since 2024
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AlertService {
 
     private final AlertRepository alertRepository;
     private final StockDataService stockDataService;
+    private final EmailService emailService;
+    private final UserRepository userRepository;
+
+    public AlertService(AlertRepository alertRepository, StockDataService stockDataService, EmailService emailService, UserRepository userRepository) {
+        this.alertRepository = alertRepository;
+        this.stockDataService = stockDataService;
+        this.emailService = emailService;
+        this.userRepository = userRepository;
+    }
 
     // Cache en memoria para precios recientes (evita llamadas excesivas a Finnhub)
     private final Map<String, CachedPrice> priceCache = new ConcurrentHashMap<>();
@@ -379,7 +388,7 @@ public class AlertService {
      *
      * Cron: cada hora (0 0 * * * *)
      */
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 0 */6 * * *")
     @Transactional
     public void checkAlerts() {
         log.debug("Iniciando verificacion de alertas programada");
@@ -489,8 +498,22 @@ public class AlertService {
     private void processTriggeredAlerts(List<Alert> triggeredAlerts) {
         for (Alert alert : triggeredAlerts) {
             try {
-                // Aqui se enviarian las notificaciones
-                // Por ahora solo logueamos
+                // Enviar notificación por email si está habilitada
+                if (alert.getEmailNotification()) {
+                    userRepository.findById(alert.getUserId()).ifPresent(user -> {
+                        emailService.sendPriceAlertEmail(
+                            user.getEmail(),
+                            user.getFirstName(),
+                            alert.getSymbol(),
+                            alert.getSymbolName(),
+                            alert.getAlertType().name(),
+                            alert.getTargetPrice(),
+                            alert.getCurrentPrice()
+                        );
+                        log.info("Email de alerta enviado a {} para {}", user.getEmail(), alert.getSymbol());
+                    });
+                }
+
                 log.warn("NOTIFICACION: Usuario {} - {}", alert.getUserId(), alert.getTriggerMessage());
 
                 // Si es recurrente, reactivar despues de notificar
@@ -501,9 +524,9 @@ public class AlertService {
                 } else {
                     // Marcar como notificada
                     alert.setStatus(Alert.AlertStatus.NOTIFIED);
+                    alert.setIsActive(false); // Una vez notificada, la desactivamos si no es recurrente
                     alertRepository.save(alert);
                 }
-
             } catch (Exception e) {
                 log.error("Error procesando notificacion para alerta {}: {}", alert.getId(), e.getMessage());
             }

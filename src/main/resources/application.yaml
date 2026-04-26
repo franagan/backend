@@ -3,9 +3,14 @@
 # ===================================================================
 
 # Application Info
+# Application Settings
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
 spring:
   application:
     name: inversion-libre-backend
+  
   jvm:
     arguments: --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
 
@@ -14,11 +19,9 @@ spring:
   # ===================================================================
   data:
     mongodb:
-      # Opción 1: Con Docker (con autenticación) - Descomentar si usas Docker
-      uri: mongodb://admin:admin123@localhost:27018/inversion_libre_db?authSource=admin
-      # Opción 2: MongoDB local sin autenticación (MongoDB Compass local)
-      # uri: mongodb://localhost:27017/inversion_libre_db
-      auto-index-creation: true
+      uri: "mongodb://admin:admin123@127.0.0.1:27018/?authSource=admin"
+      database: inversion_libre_db
+
 
   # ===================================================================
   # OAUTH2 CONFIGURATION (Google/Facebook) login
@@ -28,13 +31,13 @@ spring:
       client:
         registration:
           google:
-            client-id: your-google-client-id
-            client-secret: your-google-client-secret
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
             scope: openid,profile,email
             redirect-uri: http://localhost:8080/login/oauth2/code/google
           facebook:
-            client-id: your-facebook-app-id
-            client-secret: your-facebook-app-secret
+            client-id: ${FACEBOOK_CLIENT_ID:your-facebook-app-id}
+            client-secret: ${FACEBOOK_CLIENT_SECRET:your-facebook-app-secret}
             scope: email,public_profile
             redirect-uri: http://localhost:8080/login/oauth2/code/facebook
         provider:
@@ -79,6 +82,24 @@ spring:
       spec: maximumSize=500,expireAfterWrite=300s
 
 
+  # ===================================================================
+  # MAIL CONFIGURATION (Resend / SMTP)
+  # ===================================================================
+  mail:
+    host: smtp.resend.com
+    port: 587
+    username: resend
+    password: re_jahAstFs_HyFaYXgzSB3ZCeeSgGGmNdbt
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 
 server:
   port: 8080

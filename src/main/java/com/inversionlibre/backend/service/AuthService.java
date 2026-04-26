@@ -32,6 +32,7 @@ public class AuthService {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public JwtResponse authenticate(JwtRequest request) {
         log.info("Autenticando usuario: {}", request.getEmail());
@@ -93,6 +94,13 @@ public class AuthService {
             .build();
         
         User savedUser = userService.save(user);
+        
+        // Enviar email de bienvenida
+        try {
+            emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName());
+        } catch (Exception e) {
+            log.error("No se pudo enviar el email de bienvenida a {}: {}", savedUser.getEmail(), e.getMessage());
+        }
         
         // Generar token
         String token = jwtUtil.generateToken(savedUser);

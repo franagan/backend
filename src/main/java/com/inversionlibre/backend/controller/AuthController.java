@@ -41,6 +41,7 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
     private final com.inversionlibre.backend.util.JwtUtil jwtUtil;
+    private final com.inversionlibre.backend.service.EmailService emailService;
 
     @PostMapping("/google")
     @Operation(summary = "Login con Google", description = "Autentica con token de Google")
@@ -73,7 +74,16 @@ public class AuthController {
                         .accountNonLocked(true)
                         .credentialsNonExpired(true)
                         .build();
-                return userService.save(newUser);
+                User savedUser = userService.save(newUser);
+                
+                // Enviar email de bienvenida para usuario Google nuevo
+                try {
+                    emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFirstName());
+                } catch (Exception e) {
+                    log.error("No se pudo enviar email de bienvenida Google a {}: {}", savedUser.getEmail(), e.getMessage());
+                }
+                
+                return savedUser;
             });
 
             // Generate JWT
@@ -297,6 +307,33 @@ public class AuthController {
             log.error("Error obteniendo perfil del usuario", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Error al obtener el perfil: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/me")
+    @Operation(
+        summary = "Eliminar cuenta", 
+        description = "Elimina permanentemente la cuenta del usuario autenticado y todos sus datos",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<ApiResponse<Void>> deleteAccount() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String email = userDetails.getUsername();
+            
+            User user = userService.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+            
+            userService.deleteById(user.getId());
+            
+            log.info("Cuenta eliminada permanentemente: {}", email);
+            return ResponseEntity.ok(ApiResponse.success("Cuenta eliminada exitosamente", null));
+            
+        } catch (Exception e) {
+            log.error("Error eliminando cuenta", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Error al eliminar la cuenta"));
         }
     }
 }
